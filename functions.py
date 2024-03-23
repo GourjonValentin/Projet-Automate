@@ -55,7 +55,7 @@ class Automate:
         # Remplir le tableau de transition avec les transitions
         for i in range(self.nb_transitions):
             current_state,symbol,next_state = self.transitions[i]
-            current_state_index = int(current_state)
+            current_state_index = int(current_state) if current_state != "Init" else -1
             symbol_index = self.symb[symbol]
 
             if transitions_table[current_state_index][0] == "":
@@ -81,6 +81,7 @@ class Automate:
             if i[2] in self.init_states:
                 return True
         return False
+
     def is_deterministic(self):
         transition_table = self.transition_to_tab()
         print(transition_table)
@@ -136,4 +137,19 @@ class Automate:
                     print("|",end="")
         print("\n")
         print("--------------------------------------------------------")
+
+
+def standardize(auto: Automate):
+    if auto.is_standard():
+        return
+
+    transition_from_init = [trans for trans in auto.transitions if trans[0] in auto.init_states]
+    auto.states.append("Init")
+    auto.nb_states += 1
+    auto.init_states = ["Init"]
+    auto.nb_init_states = 1
+    for trans in transition_from_init:
+        auto.transitions.append(('Init', trans[1], trans[2]))
+        auto.nb_transitions += 1
+
 
