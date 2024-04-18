@@ -6,12 +6,7 @@ if __name__ == '__main__':
     auto.recognise_automate_from_file()
     auto.print_automate_details()
     auto.print_transitions_table()
-    standardize(auto)
+    auto.standardize()
     auto.print_automate_details()
+    auto.complete_automaton()
     auto.print_transitions_table()
-
-
-
-
-
-
