@@ -18,7 +18,7 @@ class Automate:
         file = open("./"+self.fichier,"r")
         self.nb_symb = int(file.readline())
         self.nb_states = int(file.readline())
-        self.states = [i for i in range(self.nb_states)]
+        self.states = []
 
 
 
@@ -32,8 +32,28 @@ class Automate:
 
         self.nb_transitions = int(file.readline())
         for i in range (self.nb_transitions):
+            state1 = ""
+            state2 = ""
             line = file.readline()
-            self.transitions.append(tuple(line[:-1]))
+            j=0
+            while(line[j] not in self.symb):
+                state1 += line[j]
+                j+=1
+            k=j
+            j+=1
+            while (j<len(line)):
+                if(line[j] !="\n"):
+                    state2 += line[j]
+
+                j += 1
+            if(state1 not in self.states):
+                self.states.append(state1)
+            if (state2 not in self.states):
+                self.states.append(state2)
+
+
+            self.transitions.append((state1,line[k],state2))
+
 
     def print_automate_details(self):
         print("Number symbols", self.nb_symb)
@@ -53,7 +73,10 @@ class Automate:
         # Initialisation du tableau de transitions avec des listes vides
         transitions_table = [[''] * (self.nb_symb + 1) for _ in range(self.nb_states)]
         # Remplissage du tableau de transitions avec les transitions
+        print("transitions:", self.nb_transitions)
+        print(self.transitions)
         for i in range(self.nb_transitions):
+
             current_state, symbol, next_state = self.transitions[i]
 
             # Vérifier si l'état actuel est spécial
@@ -61,14 +84,12 @@ class Automate:
                 current_state_index = -1
             elif current_state == "P" and "Init" in self.states:
                 current_state_index = -2
-                print("popo")
             elif current_state == "P" and "Init" not in self.states:
                 current_state_index = -1
             else:
-                current_state_index = int(current_state)
-                print("index",current_state_index)
+                current_state_index = self.states.index(current_state)
             symbol_index = self.symb[symbol]
-            print(current_state)
+
             if transitions_table[current_state_index][0] == "":
                 transitions_table[current_state_index][0] = current_state
 
@@ -77,11 +98,6 @@ class Automate:
             else:
                 transitions_table[current_state_index][symbol_index].append(next_state)
 
-        # Correction des états manquants
-        for j in range(self.nb_states):
-            # Si l'état n'est pas dans la liste states, cela signifie qu'il est manquant
-            if transitions_table[j][0] not in self.states:
-                transitions_table[j][0] = j
 
         if "P" in self.states and "Init" in self.states:
             transitions_table[-2] = ["P",["P"],["P"]]
@@ -100,7 +116,6 @@ class Automate:
 
     def is_deterministic(self):
         transition_table = self.transition_to_tab()
-        print(transition_table)
         for transition in transition_table:
             if (len(transition[1]) > 1 or len(transition[2]) > 1 or self.nb_init_states>1):
 
@@ -193,4 +208,42 @@ class Automate:
             self.transitions.append(('Init', trans[1], trans[2]))
             self.nb_transitions += 1
 
+    def complementary_language(self):
+        if self.is_deterministic() and self.is_complete():
+            complement_automate = Automate("automate_test.txt")
+            complement_automate.recognise_automate_from_file()
+            complement_automate.transitions = self.transitions
+            complement_automate.init_states = self.init_states
+            complement_automate.nb_transitions = self.nb_transitions
+            complement_automate.nb_states = self.nb_states
+            print("transitions:",self.transitions)
 
+
+
+            for i in range(self.nb_transitions):
+                current_state, symbol, next_state = self.transitions[i]
+
+                # Si l'état suivant est dans la liste des états terminaux, le rendre non terminal
+                if current_state in self.term_states:
+                    if current_state in complement_automate.term_states:
+                        complement_automate.term_states.remove(current_state)
+                        complement_automate.nb_term_states -= 1
+                    # Sinon, rendre l'état suivant terminal
+                elif current_state not in complement_automate.term_states:
+                    complement_automate.term_states.append(current_state)
+                    complement_automate.nb_term_states += 1
+
+
+
+            return complement_automate
+
+
+
+        elif self.is_deterministic() == False and self.is_complete() == False:
+            print("L'automate doit être déterministe et complet !!! \n")
+
+        elif self.is_deterministic() == True and self.is_complete() == False:
+            print("L'automate doit être complet !!! \n")
+
+        else:
+            print("doit être deterministe  !!! \n")

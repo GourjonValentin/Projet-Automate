@@ -10,3 +10,14 @@ if __name__ == '__main__':
     auto.print_automate_details()
     auto.complete_automaton()
     auto.print_transitions_table()
+
+    auto2 = auto.complementary_language()
+    auto2.print_automate_details()
+    auto2.print_transitions_table()
+
+
+
+
+
+
+
