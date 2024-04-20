@@ -2,13 +2,22 @@ from  functions import *
 
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
-    auto = Automate("automate_test.txt")
-    auto.recognise_automate_from_file()
+    auto = Automate("/automates/A7-23.txt")
+    print("RECOGNISE")
+    auto.recognise_automaton_from_file()
+    print("PRINTING DETAILS")
     auto.print_automate_details()
+    print("PRINTING TABLE")
     auto.print_transitions_table()
-    auto.standardize()
+    print("STANDARDIZE")
+    auto.standardize_automaton()
+    print("PRINTING DETAILS")
     auto.print_automate_details()
+    print("PRINTING TABLE")
+    auto.print_transitions_table()
+    print("COMPLETE")
     auto.complete_automaton()
+    print("PRINTING TABLE")
     auto.print_transitions_table()
 
     auto2 = auto.complementary_language()

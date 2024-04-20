@@ -14,13 +14,11 @@ class Automate:
         self.nb_transitions = 0
         self.symb = {'a': 1, 'b': 2, 'c': 3, 'd': 4, 'e': 5, 'f': 6, 'g': 7, 'h': 8, 'i': 9, 'j': 10, 'k': 11, 'l': 12, 'm': 13, 'n': 14, 'o': 15, 'p': 16, 'q': 17, 'r': 18, 's': 19, 't': 20, 'u': 21, 'v': 22, 'w': 23, 'x': 24, 'y': 25, 'z': 26}
 
-    def recognise_automate_from_file(self):
-        file = open("./"+self.fichier,"r")
+    def recognise_automaton_from_file(self):
+        file = open(f"./{self.fichier}","r")
         self.nb_symb = int(file.readline())
         self.nb_states = int(file.readline())
         self.states = []
-
-
 
         init_states = file.readline()
         self.nb_init_states = int(init_states[0])
@@ -31,29 +29,30 @@ class Automate:
         self.term_states = self.term_states[1:].split()
 
         self.nb_transitions = int(file.readline())
-        for i in range (self.nb_transitions):
-            state1 = ""
-            state2 = ""
+
+        for _ in range (self.nb_transitions):
+            state1, state2 = "", ""
             line = file.readline()
-            j=0
+            j = 0
+
             while(line[j] not in self.symb):
                 state1 += line[j]
-                j+=1
-            k=j
-            j+=1
+                j += 1
+            k = j
+            j += 1
+
             while (j<len(line)):
                 if(line[j] !="\n"):
                     state2 += line[j]
-
                 j += 1
+
             if(state1 not in self.states):
                 self.states.append(state1)
+
             if (state2 not in self.states):
                 self.states.append(state2)
 
-
             self.transitions.append((state1,line[k],state2))
-
 
     def print_automate_details(self):
         print("Number symbols", self.nb_symb)
@@ -71,131 +70,127 @@ class Automate:
     def transition_to_tab(self):
         # Copie de la liste des états
         # Initialisation du tableau de transitions avec des listes vides
-        transitions_table = [[''] * (self.nb_symb + 1) for _ in range(self.nb_states)]
+        transitions_table = [[[' ']] * (self.nb_symb+1) for _ in range(self.nb_states)]
         # Remplissage du tableau de transitions avec les transitions
         print("transitions:", self.nb_transitions)
         print(self.transitions)
         for i in range(self.nb_transitions):
-
             current_state, symbol, next_state = self.transitions[i]
 
             # Vérifier si l'état actuel est spécial
-            if current_state == "Init" :
+            if current_state == "Init":
                 current_state_index = -1
             elif current_state == "P" and "Init" in self.states:
                 current_state_index = -2
-            elif current_state == "P" and "Init" not in self.states:
+            elif current_state == "P":
                 current_state_index = -1
             else:
                 current_state_index = self.states.index(current_state)
+
             symbol_index = self.symb[symbol]
 
-            if transitions_table[current_state_index][0] == "":
+            if transitions_table[current_state_index][0] == [' ']:
                 transitions_table[current_state_index][0] = current_state
 
-            if transitions_table[current_state_index][symbol_index] == "":
+            if transitions_table[current_state_index][symbol_index] == [' ']:
                 transitions_table[current_state_index][symbol_index] = [next_state]
             else:
                 transitions_table[current_state_index][symbol_index].append(next_state)
 
-
-        if "P" in self.states and "Init" in self.states:
-            transitions_table[-2] = ["P",["P"],["P"]]
-
-        elif "P" in self.states and "Init" not in self.states:
-            transitions_table[-1] = ["P", ["P"], ["P"]]
-
+        if "P" in self.states:
+            if "Init" in self.states:
+                transitions_table[-2] = ["P"]+[["P"]]*self.nb_symb
+            else:
+                transitions_table[-1] = ["P"]+[["P"]]*self.nb_symb
 
         return transitions_table
 
     def transition_to_init_state(self):
-        for i in self.transitions:
-            if i[2] in self.init_states:
-                return True
-        return False
+        return any(i[2] in self.init_states for i in self.transitions)
 
-    def is_deterministic(self):
+    
+    def print_transitions_table(self):
         transition_table = self.transition_to_tab()
-        for transition in transition_table:
-            if (len(transition[1]) > 1 or len(transition[2]) > 1 or self.nb_init_states>1):
+        print(transition_table)
 
-                return False
-        return True
+        symbols = self.get_symbols()
+
+        print("             +" + "-----------+" * self.nb_symb)
+        print("             |", end="")
+        for symbol in symbols:
+            print(" {:^9} |".format(symbol), end="")
+        print()
+
+        print("--+----------+" + "-----------+" * self.nb_symb)
+        
+        for i in range(self.nb_states):
+            
+            if str(transition_table[i][0]) in self.term_states and str(transition_table[i][0]) in self.init_states:
+                print("ES|", end="")
+            elif str(transition_table[i][0]) in self.term_states:
+                print(" S|", end="")
+            elif str(transition_table[i][0]) in self.init_states:
+                print(" E|", end="")
+            else:
+                print("  |", end="")
+
+            print(' {:>8} |'.format(transition_table[i][0]), end="")
+            print_strings = []
+            
+            for row in transition_table[i][1:]:
+                if len(row) > 1:
+                    print_strings.append((' {:^9} |').format(','.join(row)))
+                else:
+                    print_strings.append((' {:^9} |').format(*row))
+
+            for value in print_strings:
+                print(value, end="")
+
+            print()
+            print("--+----------+" + "-----------+" * self.nb_symb)
+
+    def is_complete(self):
+        transition_table = self.transition_to_tab()
+        return all([' '] not in row[1:] for row in transition_table)
+
+    def complete_automaton(self):
+        if self.is_complete():
+            return
+        
+        self.nb_states += 1
+        self.states.append("P")
+        transition_table = self.transition_to_tab()
+
+        for i in range(len(transition_table)):
+            for j in range(len(transition_table[i])):
+                if transition_table[i][j] == [' ']:
+                    transition_table[i][j] = ['P']
+
+                    # Obtenir le symbole correspondant à la valeur j
+                    symbol = self.get_key_from_value(self.symb, j)
+                    self.transitions.append((transition_table[i][0], symbol, "P"))
+                    self.nb_transitions += 1
+
+        for i in range(self.nb_symb):
+            symbol = self.get_key_from_value(self.symb, i+1)
+            self.transitions.append(("P", symbol, "P"))
+            self.nb_transitions += 1
+
+    def is_deterministic(self):   # sourcery skip: invert-any-all
+        transition_table = self.transition_to_tab()
+        if self.nb_init_states > 1:
+            return False
+        return not any(len(transition[i]) > 1 for transition in transition_table for i in range(1, len(transition)))
+    
+    def determine_automaton(self):
+        pass
 
     def is_standard(self):
         if self.nb_init_states > 1:
             return False
         return not(self.transition_to_init_state())
 
-    def is_complete(self):
-        transition_tab = self.transition_to_tab()
-        for row in transition_tab:
-            if '' in row[1:]:
-                return False
-        return True
-
-    def print_transitions_table(self):
-        transition_table = self.transition_to_tab()
-        print(transition_table)
-        state = ""
-        for i in range(0, self.nb_states):
-            print("\n")
-            print("--------------------------------------------------------")
-            for j in range(0, self.nb_symb + 2):
-                if j == 0:
-                    if str(transition_table[i][0]) in self.term_states and str(transition_table[i][0]) in self.init_states:
-                        print("          ES|", end="")
-                    elif str(transition_table[i][0]) in self.term_states:
-
-                        print("           S|", end="")
-                    elif str(transition_table[i][0]) in self.init_states:
-
-                        print("           E|", end="")
-                    else:
-                        print("            |", end="")
-
-
-
-                else:
-
-
-                    if j>=2:
-                        print(" " * (10 - 2*(len(transition_table[i][j - 1]))), end="")
-                        for k in range (len(transition_table[i][j-1])):
-                            if transition_table[i][j-1][k]!="P":
-                                print(int(transition_table[i][j-1][k]),end=" ")
-                            else:
-                                print(transition_table[i][j - 1][k], end=" ")
-                    else:
-                        print(" " * 10, end="")
-                        print(f"{transition_table[i][j-1]}", end="")
-                    print("|",end="")
-        print("\n")
-        print("--------------------------------------------------------")
-
-    def complete_automaton(self):
-        if not self.is_complete():
-            self.nb_states += 1
-            self.states.append("P")
-            transition_table = self.transition_to_tab()
-            for i in range(len(transition_table)):
-                for j in range(len(transition_table[i])):
-                    if transition_table[i][j] == "" and str(transition_table[i][0]) not in self.term_states:
-                        transition_table[i][j] = 'P'
-                        # Obtenir le symbole correspondant à la valeur j
-                        symbol = self.get_key_from_value(self.symb, j)
-                        self.transitions.append((transition_table[i][0], symbol, "P"))
-                        self.nb_transitions+=1
-            for i in range(self.nb_symb):
-                symbol = self.get_key_from_value(self.symb, i+1)
-                self.transitions.append(("P",symbol,"P"))
-                self.nb_transitions+=1
-    def get_key_from_value(self, dictionary, value):
-        for key, val in dictionary.items():
-            if val == value:
-                return key
-
-    def standardize(self):
+    def standardize_automaton(self):
         if self.is_standard():
             return
 
@@ -204,21 +199,20 @@ class Automate:
         self.nb_states += 1
         self.init_states = ["Init"]
         self.nb_init_states = 1
+        
         for trans in transition_from_init:
             self.transitions.append(('Init', trans[1], trans[2]))
             self.nb_transitions += 1
 
-    def complementary_language(self):
+    def complementary_language(self):  # sourcery skip: extract-method
         if self.is_deterministic() and self.is_complete():
-            complement_automate = Automate("automate_test.txt")
-            complement_automate.recognise_automate_from_file()
+            complement_automate = Automate(self.fichier)
+            complement_automate.recognise_automaton_from_file()
             complement_automate.transitions = self.transitions
             complement_automate.init_states = self.init_states
             complement_automate.nb_transitions = self.nb_transitions
             complement_automate.nb_states = self.nb_states
             print("transitions:",self.transitions)
-
-
 
             for i in range(self.nb_transitions):
                 current_state, symbol, next_state = self.transitions[i]
@@ -233,11 +227,7 @@ class Automate:
                     complement_automate.term_states.append(current_state)
                     complement_automate.nb_term_states += 1
 
-
-
             return complement_automate
-
-
 
         elif self.is_deterministic() == False and self.is_complete() == False:
             print("L'automate doit être déterministe et complet !!! \n")
@@ -246,4 +236,46 @@ class Automate:
             print("L'automate doit être complet !!! \n")
 
         else:
-            print("doit être deterministe  !!! \n")
+            print("L'automate doit être deterministe  !!! \n")
+
+    def get_key_from_value(self, dictionary, value):
+        for key, val in dictionary.items():
+            if val == value:
+                return key
+
+    def get_symbols(self):
+        langage = []
+        for transition in self.transitions:
+            if transition[1] not in langage:
+                langage.append(transition[1])
+
+        langage.sort()
+        return langage
+    
+    def recognize_langage(self, word):
+        tab_transition = self.transition_to_tab()
+        state_dict = self.create_state_dictionary()  
+        for init_state in self.init_states:
+            index = init_state
+            for letter in word:
+                if letter not in self.symb:
+                    return False
+                letter_index = self.symb[letter]
+
+    
+                if index in state_dict:
+                    index = state_dict[index]
+                else:
+                    return False
+
+            
+                index = tab_transition[index][letter_index]
+        return index in self.term_states
+
+    def create_state_dictionary(self):
+        state_dict = {}
+        index = 0
+        for state in self.states:
+            state_dict[state] = index
+            index += 1
+        return state_dict
