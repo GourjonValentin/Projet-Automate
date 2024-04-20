@@ -69,18 +69,13 @@ class Automate:
         print("Déterministe ?",self.is_deterministic())
 
     def transition_to_tab(self):
-        # Copie de la liste des états
         # Initialisation du tableau de transitions avec des listes vides
         transitions_table = [[''] * (self.nb_symb + 1) for _ in range(self.nb_states)]
         # Remplissage du tableau de transitions avec les transitions
-        print("transitions:", self.nb_transitions)
-        print(self.transitions)
         for i in range(self.nb_transitions):
-
             current_state, symbol, next_state = self.transitions[i]
-
             # Vérifier si l'état actuel est spécial
-            if current_state == "Init" :
+            if current_state == "Init":
                 current_state_index = -1
             elif current_state == "P" and "Init" in self.states:
                 current_state_index = -2
@@ -94,17 +89,19 @@ class Automate:
                 transitions_table[current_state_index][0] = current_state
 
             if transitions_table[current_state_index][symbol_index] == "":
-                transitions_table[current_state_index][symbol_index] = [next_state]
+                transitions_table[current_state_index][symbol_index] = next_state
             else:
+                # Si plusieurs transitions pour un même symbole, les regrouper en une liste
+                if not isinstance(transitions_table[current_state_index][symbol_index], list):
+                    transitions_table[current_state_index][symbol_index] = [
+                        transitions_table[current_state_index][symbol_index]]
                 transitions_table[current_state_index][symbol_index].append(next_state)
 
-
         if "P" in self.states and "Init" in self.states:
-            transitions_table[-2] = ["P",["P"],["P"]]
+            transitions_table[-2] = ["P", ["P"] * (self.nb_symb + 1)]
 
         elif "P" in self.states and "Init" not in self.states:
-            transitions_table[-1] = ["P", ["P"], ["P"]]
-
+            transitions_table[-1] = ["P", ["P"] * (self.nb_symb + 1)]
 
         return transitions_table
 
@@ -247,3 +244,35 @@ class Automate:
 
         else:
             print("doit être deterministe  !!! \n")
+
+    def minimization(self):
+        if not (self.is_complete() and self.is_deterministic()):
+            print("L'automate doit être déterministe complet pour pouvoir minimiser")
+            return None
+
+        # Créer une partition initiale des états en états terminaux et non terminaux
+        partition = [set(self.term_states), set(self.states) - set(self.term_states)]
+
+        # Créer un dictionnaire pour stocker les nouvelles transitions minimisées
+        new_transitions = {}
+
+        # Initialiser une liste de partitions à explorer
+        partitions_to_explore = [partition]
+
+    def recognize_langage(self, word):
+        tab_transition = self.transition_to_tab()
+        index = self.init_states[0]  # Utilisation de l'état initial directement
+        for letter in word:
+            # Vérifier si la lettre est reconnue
+            if letter not in self.symb:
+                print(f"Lettre '{letter}' non reconnue. Mot invalide.")
+                return False
+            letter_index = self.symb[letter]
+
+            # Convertir l'indice en entier
+            index = int(index)
+            # Accéder à l'état suivant dans le tableau de transitions
+            index = tab_transition[index][letter_index]
+        return index in self.term_states
+
+
