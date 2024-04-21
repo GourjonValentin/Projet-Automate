@@ -6,7 +6,16 @@ if __name__ == '__main__':
     auto.recognise_automate_from_file()
     auto.print_automate_details()
     auto.print_transitions_table()
-    auto.standardize()
+    #auto.standardize()
     auto.print_automate_details()
-    auto.complete_automaton()
+    #auto.complete_automaton()
     auto.print_transitions_table()
+
+
+    print("----------------------------------------------------------------------------------------------------------------")
+    print("Determinisation de l'automate")
+    auto.determinize()
+    print("Details :")
+    auto.print_automate_details()
+    auto.print_transitions_table()
+    print("done")
