@@ -76,7 +76,7 @@ class Automate:
         for i in range(self.nb_transitions):
             current_state, symbol, next_state = self.transitions[i]
             # Vérifier si l'état actuel est spécial
-            if current_state == "Init":
+            ''' if current_state == "Init":
                 current_state_index = -1
             elif current_state == "P" and "Init" in self.states:
                 current_state_index = -2
@@ -84,6 +84,8 @@ class Automate:
                 current_state_index = -1
             else:
                 current_state_index = self.states.index(current_state)
+            '''
+            current_state_index = self.states.index(current_state)
             symbol_index = self.symb[symbol]
 
             if transitions_table[current_state_index][0] == "":
@@ -115,7 +117,7 @@ class Automate:
     def is_deterministic(self):
         transition_table = self.transition_to_tab()
         for transition in transition_table:
-            if (len(transition[1]) > 1 or len(transition[2]) > 1 or self.nb_init_states > 1):
+            if isinstance(transition[1], list) and (len(transition[1]) > 1 or len(transition[2]) > 1 or self.nb_init_states > 1):
                 return False
         return True
 
@@ -254,8 +256,8 @@ class Automate:
                     for i in [*trans[1]]:
                         if i in self.term_states:
                             new_term_states.append(trans[1])
-                            
-             newstate_ind += 1
+
+            newstate_ind += 1
 
         self.transitions = new_transitions
         self.states = new_states
@@ -274,11 +276,14 @@ class Automate:
             complement_automate.init_states = self.init_states
             complement_automate.nb_transitions = self.nb_transitions
             complement_automate.nb_states = self.nb_states
-            print("transitions:",self.transitions)
+            complement_automate.nb_symb = self.nb_symb
+            complement_automate.nb_init_states = self.nb_init_states
+            complement_automate.nb_term_states = self.nb_term_states
+            complement_automate.states = self.states
+            complement_automate.symb = self.symb
+            complement_automate.term_states = self.term_states
 
-
-
-            for i in range(self.nb_transitions):
+            '''for i in range(self.nb_transitions):
                 current_state, symbol, next_state = self.transitions[i]
 
                 # Si l'état suivant est dans la liste des états terminaux, le rendre non terminal
@@ -289,7 +294,10 @@ class Automate:
                     # Sinon, rendre l'état suivant terminal
                 elif current_state not in complement_automate.term_states:
                     complement_automate.term_states.append(current_state)
-                    complement_automate.nb_term_states += 1
+                    complement_automate.nb_term_states += 1'''
+
+            complement_automate.term_states = list(set(complement_automate.states) - set(complement_automate.term_states))
+            complement_automate.nb_term_states = len(complement_automate.term_states)
 
 
 
